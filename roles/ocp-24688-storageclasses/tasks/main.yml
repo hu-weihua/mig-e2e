@@ -4,11 +4,11 @@
   when: with_cleanup|bool
 
 - name: Create bogus storageclasses in migration source cluster
-  import_tasks: deploy.yml
+  import_tasks: deploy_source.yml
   when: with_deploy|bool
 
 - name: Create bogus storageclasses in migration target cluster 
-  import_tasks: deploy.yml
+  import_tasks: deploy_target.yml
   when: with_migrate|bool
 
 - name: Validate source

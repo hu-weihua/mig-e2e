@@ -1,0 +1,4 @@
+- name: Create bogus storageclasses in migration target cluster
+  k8s:
+    state: present
+    definition: "{{ lookup('file', 'test_storageclasses.yml') }}"
