@@ -1,0 +1,11 @@
+- name: verify bogus storageclasses setting in migration target cluster
+  k8s_facts:
+    kind: sc 
+    namespace: default 
+  register: sc_list 
+  until: sc_list.resources | length > 0
+  retries: 30
+
+- debug:
+    msg: "{{ sc_list }}"
+
