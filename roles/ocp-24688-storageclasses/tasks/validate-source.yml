@@ -1,6 +1,16 @@
-- debug:
-    msg:  "aaaaaaaaaaaaaaaa"
+- name: get all storageclasses infornamtion of migration target cluster
+  k8s_info:
+    api_version: v1
+    kind: StorageClass
+  register: all_sc
 
-  
-#- name: verify bogus storageclasses setting in migration source cluster
+- name: get all storageclasses name list of migration target cluster
+  set_fact:
+     sc_name_list: "{{ all_sc | json_query('resources[].metadata.name') |list }}"
+
+- name: verify bogus storageclasses setting in migration target cluster
+  fail: 
+    msg: "setting bogus storageclasses {{ bogus_storageclass_name }} failed in migration target cluster"
+  when: "bogus_storageclass_name not in (sc_name_list | string )"
+
 

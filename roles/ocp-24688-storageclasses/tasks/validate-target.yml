@@ -1,11 +1,56 @@
+- name: get all storageclasses infornamtion of migration target cluster
+  k8s_info:
+    api_version: v1
+    kind: StorageClass
+  register: all_sc
+
+- name: get all storageclasses name list of migration target cluster
+  set_fact:
+     sc_name_list: "{{ all_sc | json_query('resources[].metadata.name') |list }}"
+
 - name: verify bogus storageclasses setting in migration target cluster
-  k8s_facts:
-    kind: sc 
-    namespace: default 
-  register: sc_list 
-  until: sc_list.resources | length > 0
+  fail: 
+    msg: "setting bogus storageclasses {{ bogus_storageclass_name }} failed in migration target cluster"
+  when: "bogus_storageclass_name not in (sc_name_list | string )"
+
+
+- name: verify migcluster definition of target cluster {{ migcluster_target_name }}
+  k8s_info:
+    api_version: v1alpha1
+    kind: MigCluster 
+    namespace: "{{ migration_namespace }}"
+    field_selectors:
+      - metadata.name={{ migcluster_target_name }}
+  register: target_sc
+  until: sc_name_list |difference(target_sc | json_query('resources[].spec.storageClasses[].name')|list)| length == 0
   retries: 30
 
-- debug:
-    msg: "{{ sc_list }}"
+- name: set fact for string 
+  set_fact:
+    expected_string: "The cluster is ready"  
 
+#- debug:
+#    msg: "{{ target_sc }}"
+
+- name: Vefify migcluster definition of target cluster is ready
+  fail:
+    msg: "there is no statement {{ expected_string }} in migcluter definition of target cluster {{ migcluster_target_name }}"
+  when: "expected_string not in (target_sc| json_query('resources[].status.conditions[].message')|string)"
+
+- name: Verity migcluster definition of source cluster {{ migcluster_source_name }}
+  k8s_info:
+    api_version: v1alpha1
+    kind: MigCluster 
+    namespace: "{{ migration_namespace }}"
+    field_selectors:
+      - metadata.name={{ migcluster_source_name }}
+  register: source_sc
+  until: "bogus_storageclass_name in (source_sc | json_query('resources[].spec.storageClasses[].name') | string)"
+  retries: 30
+
+
+- name: Vefify migcluster definition of source cluster is ready
+  fail:
+    msg: "there is no statement {{ expected_string }} in migcluter definition of source cluster {{ migcluster_source_name }}"
+  when: "expected_string not in (source_sc| json_query('resources[].status.conditions[].message')|string)"
+ 
