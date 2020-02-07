@@ -1,6 +1,7 @@
 namespace: ocp-24688-storageclasses 
 
 bogus_storageclass_name: test-storageclass
+source_cluster_sc_name_list_tmp_file: ./roles/{{ namespace }}/files/source_cluster_sc_name_list_tmp_file.tmp
 
 migration_sample_name: "{{ namespace }}"
 migration_plan_name: "{{ migration_sample_name }}-migplan-{{ ansible_date_time.epoch }}"
