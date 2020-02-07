@@ -34,3 +34,16 @@
   k8s:
     state: present
     definition: "{{ lookup('file', 'test_storageclasses.yml') }}"
+
+- name: clear the expired source cluster sc name list in tmp file 
+  file:
+    path: "{{ source_cluster_sc_name_list_tmp_file }}"
+    state: absent
+  when: source_cluster_sc_name_list_tmp_file is defined
+
+- name: save the source cluster sc name list to tmp file
+  copy:
+    content: "{{ all_sc | json_query('resources[].metadata.name') |list }}" 
+    dest: "{{ source_cluster_sc_name_list_tmp_file }}"
+
+
