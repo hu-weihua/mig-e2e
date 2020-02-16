@@ -38,25 +38,7 @@
     msg: "there is no statement {{ expected_string }} in migcluter definition of target cluster {{ migcluster_target_name }}"
   when: "expected_string not in (target_sc| json_query('resources[].status.conditions[].message')|string)"
 
-- when: source_cluster_sc_name_list_tmp_file is defined 
-  block:
-  - name: extract source cluster sc name list from tmp file
-    shell: cat {{ source_cluster_sc_name_list_tmp_file }}
-    register: source_sc_name_list
-
-  - name: Verity migcluster definition of source cluster {{ migcluster_source_name }}
-    k8s_facts:
-      api_version: v1alpha1
-      kind: MigCluster 
-      namespace: "{{ migration_namespace }}"
-      field_selectors:
-        - metadata.name={{ migcluster_source_name }}
-    register: source_sc
-    until: "source_sc_name_list.stdout |difference(source_sc | json_query('resources[].spec.storageClasses[].name')|list)| length == 0"
-    retries: 30
- 
-
-- when: source_cluster_sc_name_list_tmp_file not is defined
+- when: source_cluster_sc_name_list_tmp_file is not defined
   block:
   - name: Verity migcluster definition of source cluster {{ migcluster_source_name }}
     k8s_facts:
@@ -69,9 +51,38 @@
     until: "bogus_storageclass_name in (source_sc | json_query('resources[].spec.storageClasses[].name') | string)"
     retries: 30
 
+  - name: Vefify migcluster definition of source cluster is ready
+    fail:
+      msg: "there is no statement {{ expected_string }} in migcluter definition of source cluster {{ migcluster_source_name }}"
+    when: "expected_string not in (source_sc| json_query('resources[].status.conditions[].message')|string)"
 
-- name: Vefify migcluster definition of source cluster is ready
-  fail:
-    msg: "there is no statement {{ expected_string }} in migcluter definition of source cluster {{ migcluster_source_name }}"
-  when: "expected_string not in (source_sc| json_query('resources[].status.conditions[].message')|string)"
+- when: source_cluster_sc_name_list_tmp_file is defined 
+  block:
+  - name: Verity migcluster definition of source cluster {{ migcluster_source_name }}
+    k8s_facts:
+      api_version: v1alpha1
+      kind: MigCluster 
+      namespace: "{{ migration_namespace }}"
+      field_selectors:
+        - metadata.name={{ migcluster_source_name }}
+    register: source_sc
+
+  - name: save the source cluster sc name list in migcluster definition to tmp file
+    copy:
+      content: "{{ source_sc | json_query('resources[].spec.storageClasses[].name')|list }}" 
+      dest: "{{ source_cluster_sc_name_list_tmp_file2 }}"
+  
+  - name: compare the 2 tmp files
+    shell: diff -y {{ source_cluster_sc_name_list_tmp_file }} {{ source_cluster_sc_name_list_tmp_file2 }} 
+    register: diff_result
+  
+  - name: check the diff result
+    fail: 
+      msg: "the StorageClass of source cluster in migcluster  {{ migcluster_source_name }} is wrong"
+    when: diff_result.rc != 0
+
+  - name: Vefify migcluster definition of source cluster is ready
+    fail:
+      msg: "there is no statement {{ expected_string }} in migcluter definition of source cluster {{ migcluster_source_name }}"
+    when: "expected_string not in (source_sc| json_query('resources[].status.conditions[].message')|string)"
  
