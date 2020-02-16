@@ -1,0 +1,9 @@
+- name: Deploy simple hello world cron job using external image in migration source cluster {{ migcluster_source_name }}
+  k8s:
+    state : present
+    namespace : "{{ migration_sample_name }}"
+    definition: "{{ lookup('template', 'deployment.yml.j2' )}}"
+  vars:
+    app_name: "{{ app_name }}"
+    docker_image: "{{ docker_image }}" 
+

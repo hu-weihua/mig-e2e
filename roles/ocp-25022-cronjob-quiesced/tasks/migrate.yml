@@ -1,0 +1,4 @@
+- name: Execute migration
+  include_role:
+    name: migration_run
+
