@@ -4,7 +4,7 @@
     kind: MigMigration 
     namespace: "{{ migration_namespace }}"
     field_selectors:
-      - metadata.name={{ metadata }}
+      - metadata.name={{ migration_name }}
   register: mig_result 
   until: "mig_result.resources[0].status.conditions.message is The migration has completed successfully."  
   retries: 30
@@ -25,12 +25,12 @@
 - name: sleep 1 minute to wait cron job to run
   shell: sleep 60
 
-- name: Check app {{ app_name }} pod status
+- name: Check app {{ cur_app_name }} pod status
   k8s_facts:
     api_version: v1 
     kind: Pod
     namespace: "{{ migration_sample_name }}"
-    label_selectors: "cronowner={{ app_name }}"
+    label_selectors: "cronowner={{ cur_app_name }}"
     field_selectors: 
     - status.phase=Succeeded
   register: pod
@@ -41,7 +41,7 @@
     msg: "{{ pod }}"
 
 - name: get  the lof of cron job
-  shell: oc logs $(oc get pod -n cronquiesced-test|grep Completed|tail -1|awk '{print $1}')
+  shell: oc logs $(oc get pod -n {{ migration_sample_name }}|grep Completed|tail -1|awk '{print $1}')  -n {{ migration_sample_name }}
   register: cronjob_log
 
 - debug:
@@ -49,12 +49,12 @@
 
 - name: set expected log string
   set_fact:
-     expected_log_str: "Hello! from namespace{{ migration_sample_name }} while using image {{ docker_image }}"
+     expected_log_str: "Hello! from namespace {{ migration_sample_name }} while using image {{ cur_docker_image }}"
 
 - name: check the log of cron job
-   fail:
+  fail:
      msg: "the log of cron job is wrong"
-   when: "expected_log_str not in cronjob_log.stdout"
+  when: "expected_log_str not in cronjob_log.stdout"
 
 #TODO: when possible, check that original cronjobs have not been quiesced.
 

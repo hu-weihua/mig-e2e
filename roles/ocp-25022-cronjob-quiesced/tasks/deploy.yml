@@ -1,9 +1,20 @@
+- name: Check namespace
+  k8s_facts:
+    kind: Namespace
+    name: "{{ namespace }}"
+  register: ns
+
+- name: Create namespace
+  shell: "{{ oc_binary }} new-project {{ migration_sample_name }} --skip-config-write=true"
+  when: ns.resources | length == 0
+
+
 - name: Deploy simple hello world cron job using external image in migration source cluster {{ migcluster_source_name }}
   k8s:
     state : present
     namespace : "{{ migration_sample_name }}"
     definition: "{{ lookup('template', 'deployment.yml.j2' )}}"
   vars:
-    app_name: "{{ app_name }}"
-    docker_image: "{{ docker_image }}" 
+    app_name: "{{ cur_app_name }}"
+    docker_image: "{{ cur_docker_image }}" 
 
