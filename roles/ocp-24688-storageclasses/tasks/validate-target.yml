@@ -24,6 +24,7 @@
   register: target_sc
   until: sc_name_list |difference(target_sc | json_query('resources[].spec.storageClasses[].name')|list)| length == 0
   retries: 30
+  delay: 10 
 
 - name: set fact for string 
   set_fact:
