@@ -1,3 +1,7 @@
+- name: set expected output for MigMigration
+  set_fact:
+    expected_string: "The migration has completed successfully"  
+
 - name: check the migmigration running status 
   k8s_facts:
     api_version: migration.openshift.io/v1alpha1 
@@ -6,7 +10,7 @@
     field_selectors:
       - metadata.name={{ migration_name }}
   register: mig_result 
-  until: "mig_result.resources[0].status.conditions.message is The migration has completed successfully."  
+  until: "expected_string in (mig_result| json_query('resources[0].status.conditions[].message')|string)"            
   retries: 30
 
 
