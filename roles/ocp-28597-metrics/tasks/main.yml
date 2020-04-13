@@ -1,0 +1,4 @@
+- name: Validate metrics work 
+  import_tasks: validate-target.yml
+  when: (with_validate|bool) and (with_migrate|bool)
+
