@@ -1,10 +1,13 @@
 - name: Add label to namespace {{ migration_namespace }} 
-  shell: "{{ oc_binary }} label ns {{ migration_namespace }}openshift-migration openshift.io/cluster-monitoring=true"
+  shell: "{{ oc_binary }} label ns {{ migration_namespace }} openshift.io/cluster-monitoring=true"
 
 
 - name: To get namespace {{ migration_namespace }} definition
   shell: "{{ oc_binary }} get ns {{ migration_namespace }} -o yaml"
   register: output
+
+- debug:
+    msg: "{{ output }}"
 
 - fail:
     msg: "Add label openshift.io/cluster-monitoring=true to ns {{ migration_namespace }} failed"
@@ -12,9 +15,15 @@
 
  
 - name: To get metrics from migration-controller pod 
-  shell: {{ oc_binary }} -n {{ migration_namespace }} rsh $({{ oc_binary }} get pod -n {{ migration_namespace }}|awk '/migration-controller/ {print $1}') curl  http://mig-controller-metrics.openshift-migration.svc.cluster.local:2112/metrics
+  shell: "{{ oc_binary }} -n {{ migration_namespace }} rsh $({{ oc_binary }} get pod -n {{ migration_namespace }}|awk '/migration-controller/ {print $1}') curl  http://mig-controller-metrics.openshift-migration.svc.cluster.local:2112/metrics"
   register: metrics_info  
 
 
 - debug:
     msg: "{{ metrics_info }}"
+
+
+- fail:
+    msg: "Failed to get cam_app_workload_migrations metrics from migration-controller pod"
+  when: not (metrics_info.stdout is search("cam_app_workload_migrations"))
+
