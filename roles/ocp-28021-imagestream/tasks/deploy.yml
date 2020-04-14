@@ -1,0 +1,30 @@
+- name: To create new project {{ namespace }}
+  shell: "{{ oc_binary }}  new-project  {{ namespace }}"
+  register: create_project
+
+- fail:
+    msg: "Failed to create new project {{ namespace }}"
+  when: create_project.rc != 0
+
+- name: To create the image stream
+   shell: "{{ oc_binary }} -n {{ namespace }} import-image {{ internal_image_name }}:int --from {{ external_image_name }} --confirm"
+
+- name: To add tag tag1 to the imagestream
+   shell: "{{ oc_binary }} -n {{ namespace }} tag {{ internal_image_name }}:int {{ internal_image_name }}:tag1"
+
+- name: To add tag tag2 to the imagestream
+   shell: "{{ oc_binary }} -n {{ namespace }} tag {{ internal_image_name }}:int {{ internal_image_name }}:tag2 --alias=true"
+
+- name: To create the new imagestream
+   shell: "{{ oc_binary }} -n {{ namespace }} import-image {{ internal_image_name }}:v3.9 --from {{ external_image_name }}:v3.9"
+
+- name: To add tag tag3 to the imagestream
+   shell: "{{ oc_binary }} -n {{ namespace }} tag {{ internal_image_name }}:v3.9 {{ internal_image_name }}:tag3"
+
+- name: To add tag latest to the imagestream
+   shell: "{{ oc_binary }} -n {{ namespace }} tag {{ internal_image_name }}:v3.9 {{ internal_image_name }}:latest"
+
+- name: To add tag tag4 to the imagestream
+   shell: "{{ oc_binary }} -n {{ namespace }} tag {{ internal_image_name }}:v3.9 {{ internal_image_name }}:tag4 --alias=true"
+
+  
