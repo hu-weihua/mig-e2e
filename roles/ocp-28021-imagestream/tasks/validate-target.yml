@@ -1,4 +1,4 @@
-- name: To check if imagestream is imported successfully
+- name: To check if imagestreams is imported successfully
   shell: "{{ oc_binary }} get is -n {{ namespace }}"
   register: img_info
 
@@ -6,41 +6,42 @@
     msg: "{{ img_info }}"
 
 - fail:
-    msg: "Failed to import imagestram {{ internal_image_name }} in namespace {{ namespace }}"
-  when: not (img_info.stdout is search({{ internal_image_name }}))
+    msg: "Failed to import imagestreams internal-image in namespace {{ namespace }}"
+  when: not (img_info.stdout is search("internal-image"))
 
-- name: To check if imagestream is imported successfully
+- name: To check if imagestreams is tagged correctly
   shell: "{{ oc_binary }} get istag -n {{ namespace }}"
-  register: tag_int_info
+  register: tag_info
 
 - debug:
-    msg: "{{ tag_int_info }}"
+    msg: "{{ tag_info }}"
 
 - fail:
-    msg: "Failed to import imagestram {{ internal_image_name }} in namespace {{ namespace }}"
-  when: not (tag_int_info.stdout is search("{{ internal_image_name }}:int"))
+    msg: "Failed to import imagestreams internal-image in namespace {{ namespace }}"
+  when: not (tag_info.stdout is search("internal-image:int"))
 
 - fail:
-    msg: "Failed to add tag1 to imagestream {{ internal_image_name }} in namespace {{ namespace }}"
-  when: not (tag_tag1_info.stdout is search("{{ internal_image_name }}:tag1"))
+    msg: "Failed to add tag1 to imagestreams internal-image in namespace {{ namespace }}"
+  when: not (tag_info.stdout is search("internal-image:tag1"))
 
 - fail:
-    msg: "Failed to add tag2 to imagestream {{ internal_image_name }} in namespace {{ namespace }}"
-  when: not (tag_tag2_info.stdout is search("{{ internal_image_name }}:tag2"))
+    msg: "Failed to add tag2 to imagestreams internal-image in namespace {{ namespace }}"
+  when: not (tag_info.stdout is search("internal-image:tag2"))
 
 - fail:
-        msg: "Failed to import imagestram {{ internal_image_name }}:v3.9 in namespace {{ namespace }}"
-  when: not (tag_v39_info.stdout is search("{{ internal_image_name }}:v3.9"))
+        msg: "Failed to import imagestreams internal-image:v3.9 in namespace {{ namespace }}"
+  when: not (tag_info.stdout is search("internal-image:3.9"))
 
 - fail:
-    msg: "Failed to add tag3 to imagestream {{ internal_image_name }} in namespace {{ namespace }}"
-  when: not (tag_tag3_info.stdout is search("{{ internal_image_name }}:tag3"))
+    msg: "Failed to add tag3 to imagestreams internal-image in namespace {{ namespace }}"
+  when: not (tag_info.stdout is search("internal-image:tag3"))
 
 - fail:
-    msg: "Failed to add latest to imagestream {{ internal_image_name }} in namespace {{ namespace }}"
-  when: not (tag_latest_info.stdout is search("{{ internal_image_name }}:latest"))
+    msg: "Failed to add latest to imagestreams internal-image in namespace {{ namespace }}"
+  when: not (tag_info.stdout is search("internal-image:latest"))
 
 - fail:
-    msg: "Failed to add tag4 to imagestream {{ internal_image_name }} in namespace {{ namespace }}"
-  when: not (tag_tag4_info.stdout is search("{{ internal_image_name }}:tag4"))
+    msg: "Failed to add tag4 to imagestreams internal-image in namespace {{ namespace }}"
+  when: not (tag_info.stdout is search("internal-image:tag4"))
+
 
