@@ -13,15 +13,23 @@
     msg: "Add label openshift.io/cluster-monitoring=true to ns {{ migration_namespace }} failed"
   when: not (output.stdout is search("openshift.io/cluster-monitoring"))
 
+- name: To check service migration-operator-metrics is running
+  shell: "{{ oc_binary }} get service -n {{ migration_namespace }}"
+  register: service_info
+
+- debug:
+    msg: "{{ service_info }}"
+
+- fail:
+    msg: "Failed to find service/migration-operator-metrics in namespace {{ migration_namespace }}"
+  when: not (service_info.stdout is search("migration-operator-metrics"))
  
 - name: To get metrics from migration-controller pod 
   shell: "{{ oc_binary }} -n {{ migration_namespace }} rsh $({{ oc_binary }} get pod -n {{ migration_namespace }}|awk '/migration-controller/ {print $1}') curl  http://mig-controller-metrics.openshift-migration.svc.cluster.local:2112/metrics"
   register: metrics_info  
 
-
 - debug:
     msg: "{{ metrics_info }}"
-
 
 - fail:
     msg: "Failed to get cam_app_workload_migrations metrics from migration-controller pod"
