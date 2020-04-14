@@ -1,4 +1,4 @@
-namespace: ocp-28021-imagestream
+namespace: ocp-28021-imagestreams
 
 migration_sample_name: "{{ namespace }}"
 migration_plan_name: "{{ migration_sample_name }}-migplan-{{ ansible_date_time.epoch }}"
@@ -10,6 +10,5 @@ with_validate: true
 pv: false
 quiesce: false
 
-internal_image_name: internal-alpine
 external_image_name: docker.io/alpine
 
