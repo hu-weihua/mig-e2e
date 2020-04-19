@@ -1,0 +1,24 @@
+namespace: ocp-24706-volume 
+
+migration_sample_name: "{{ namespace }}"
+migration_plan_name: "{{ migration_sample_name }}-migplan-{{ ansible_date_time.epoch }}"
+migration_name: "{{ migration_sample_name }}-mig-{{ ansible_date_time.epoch }}"
+with_deploy: true
+with_migrate: true
+with_cleanup: true
+with_validate: true
+quiesce: false
+
+
+pv: true
+pv_action: copy
+pv_copy_method: filesystem
+dst_storage_class: gp2 
+src_storageclass: gp2
+
+logs_accessmode: ReadWriteOnce
+logs_storageclass: "{{ src_storageclass }}" 
+html_accessmode: ReadWriteOnce
+html_storageclass: "{{ src_storageclass }}"
+ 
+

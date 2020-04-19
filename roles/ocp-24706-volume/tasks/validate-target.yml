@@ -1,0 +1,90 @@
+- name: Check nodes status
+  k8s_facts:
+    kind: Pod
+    namespace: "{{ namespace }}"
+    label_selectors: "app=nginx"
+  register: pod
+  until: "true in (pod | json_query('resources[].status.containerStatuses[].ready'))"
+  retries: 30
+
+- name: Check PV nginx-html status
+  k8s_facts:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    namespace: "{{ migration_sample_name }}"
+    label_selectors:
+    - app=nginx
+    field_selectors:
+    - metadata.name=nginx-html
+    - spec.storageClassName={{ dst_storage_class }}
+    - status.accessModes={{ html_accessmode }}
+    - status.phase=Bound 
+  register: html_pv 
+  until: html_pv.resources | length > 0
+  retries: 30
+  
+- debug:
+    msg: "{{ html_pv }}"
+
+- name: Check PV nginx-logs status
+  k8s_facts:
+    api_version: v1
+    kind: PersistentVolumeClaim
+    namespace: "{{ migration_sample_name }}"
+    label_selectors:
+    - app=nginx
+    field_selectors:
+    - metadata.name=nginx-logs
+    - spec.storageClassName={{ dst_storage_class }}
+    - status.accessModes={{ logs_accessmode }}
+    - status.phase=Bound
+  register: logs_pv
+  until: logs_pv.resources | length > 0
+  retries: 30
+
+- debug:
+    msg: "{{ logs_pv }}"
+    
+- name: Obtain route
+  k8s_facts:
+    kind: Route
+    namespace: "{{ namespace }}"
+    label_selectors: "app=nginx"
+  register: nginx_route
+
+- name: Acces the html file again
+  uri:
+    url: http://{{ nginx_route.resources[0].spec.host }}
+    method: GET
+    status_code: 200 
+
+- name: Get /var/log/nginx/error.log file content
+  shell: "{{ oc_binary }} -n {{ namespace }} rsh $({{ oc_binary }} get pods -n {{ namespace }} -o jsonpath='{.items[0].metadata.name}') cat /var/log/nginx/error.log "
+  register: output
+  until: output.rc == 0 and output.stdout != ''
+  retries: 5
+
+- debug: msg={{ output.stdout_lines }}
+  name: /var/log/nginx/error.log file content
+
+- name: Fail if no forbidden error present in nginx access.log file. There must be 1 error
+  fail:
+     msg: There should be one and only one forbidden error in access.log file.
+  failed_when: 1 != ( output.stdout_lines | select('match', '.*directory index of "/usr/share/nginx/html/" is forbidden.*') | list | length )
+  
+
+- name: Get /var/log/nginx/access.log file content
+  shell: "{{ oc_binary }} -n {{ namespace }} rsh $({{ oc_binary }} get pods -n {{ namespace }} -o jsonpath='{.items[0].metadata.name}') cat /var/log/nginx/access.log "
+  register: output_access
+  until: output_access.rc == 0 and output_access.stdout != ''
+  retries: 5
+
+- debug: msg={{ output_access.stdout_lines }}
+  name: /var/log/nginx/access.log file content
+
+- name: Fail if no 200 code present in nginx access.log file. There must be 1 access
+  fail:
+     msg: There should be one and only one 200 code in access.log file.
+  failed_when: 2 < ( output_access.stdout_lines | select('match', '.*200 21 "-" \"ansible-httpget".*') | list | length )
+
+
