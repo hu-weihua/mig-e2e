@@ -11,16 +11,12 @@
   k8s_facts:
     api_version: v1
     kind: PersistentVolumeClaim
-    namespace: "{{ migration_sample_name }}"
-    label_selectors:
-    - app=nginx
+    namespace: "{{ namespace }}"
+    label_selectors: "app=nginx"
     field_selectors:
     - metadata.name=nginx-html
-    - spec.storageClassName={{ html_storageclass }}
-    - status.accessModes={{ html_accessmode }}
-    - status.phase=Bound 
   register: html_pv 
-  until: html_pv.resources | length > 0
+  until: html_pv.get("resources", []) and html_pv.resources[0].get("status", {}).get("phase", "") == "Bound"
   retries: 30
   
 - debug:
@@ -30,16 +26,13 @@
   k8s_facts:
     api_version: v1
     kind: PersistentVolumeClaim
-    namespace: "{{ migration_sample_name }}"
+    namespace: "{{ namespace }}"
     label_selectors:
     - app=nginx
     field_selectors:
     - metadata.name=nginx-logs
-    - spec.storageClassName={{ logs_storageclass }}
-    - status.accessModes={{ logs_accessmode }}
-    - status.phase=Bound
   register: logs_pv
-  until: logs_pv.resources | length > 0
+  until: logs_pv.get("resources", []) and logs_pv.resources[0].get("status", {}).get("phase", "") == "Bound"
   retries: 30
 
 - debug:

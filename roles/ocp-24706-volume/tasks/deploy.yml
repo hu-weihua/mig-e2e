@@ -1,9 +1,9 @@
 - name: Create in source cluster a nginx application with two persistent volumes
-  shell: "{{ oc_binary }} process -p LOGS_ACCESSMODE={{ logs_accessmode }}  -p LOGS_STORAGECLASS={{ logs_storageclass }}  -p HTML_ACCESSMODE={{ html_accessmode }} -p HTML_STORAGECLASS={{ html_storageclass }} -p NAMESPACE={{ namespace }} -f {{ playbook_dir }}/roles/{{ migration_sample_name }}/templates/nginx_with_pv_template.yml |oc create -f -
+  shell: "{{ oc_binary }} process -p LOGS_ACCESSMODE={{ logs_accessmode }}  -p LOGS_STORAGECLASS={{ logs_storageclass }}  -p HTML_ACCESSMODE={{ html_accessmode }} -p HTML_STORAGECLASS={{ html_storageclass }} -p NAMESPACE={{ namespace }} -f {{ playbook_dir }}/roles/{{ migration_sample_name }}/templates/nginx_with_pv_template.yml |oc create -f - "
   register: create_result
 
 
 - fail:
-    msg: "Create in source cluster a nginx application with two persistent volumes failed"
+   msg: "Create in source cluster a nginx application with two persistent volumes failed"
   when: create_result.rc != 0 
 
