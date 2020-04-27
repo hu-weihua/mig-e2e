@@ -4,8 +4,8 @@
     kind: StorageClass 
   register: all_sc
 
-#- debug:
-#    msg: "{{ all_sc }}"
+- debug:
+    msg: "{{ all_sc }}"
 
 - block:
 
@@ -46,8 +46,17 @@
   pause:
     seconds: "60"
 
+- name: Check existing StorageClass for {{ bogus_storageclass_name }} in migration source cluster {{ migcluster_source_name }} again
+  k8s_facts:
+    api_version: v1
+    kind: StorageClass
+  register: all_sc_1
+
+- debug:
+    msg: "{{ all_sc_1 }}"
+
 - name: save the source cluster sc name list to tmp file
   copy:
-    content: "{{ all_sc | json_query('resources[].metadata.name') |list }}" 
+    content: "{{ all_sc_1 | json_query('resources[].metadata.name') |list }}" 
     dest: "{{ source_cluster_sc_name_list_tmp_file }}"
 
